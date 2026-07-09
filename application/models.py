@@ -9,6 +9,12 @@ service_mechanics = db.Table(
     db.Column("mechanic_id", db.ForeignKey("mechanics.id"), primary_key=True)
 )
 
+service_inventory = db.Table(
+    "service_inventory",
+    db.Column("service_id", db.ForeignKey("service_tickets.id"), primary_key=True),
+    db.Column("inventory_id", db.ForeignKey("inventory.id"), primary_key=True)
+)
+
 
 class Customer(db.Model):
     __tablename__ = 'customers'
@@ -17,8 +23,12 @@ class Customer(db.Model):
     name: Mapped[str] = mapped_column(db.String(255), nullable=False)
     email: Mapped[str] = mapped_column(db.String(360), nullable=False, unique=True)
     phone: Mapped[str] = mapped_column(db.String(10), nullable=False)
+    password: Mapped[str] = mapped_column(db.String(255), nullable=False)
 
-    service_tickets: Mapped[List['Service']] = db.relationship(back_populates='customer')
+    service_tickets: Mapped[List['Service']] = db.relationship(
+        back_populates='customer',
+        cascade="all, delete-orphan"
+    )
 
 
 class Service(db.Model):
@@ -40,6 +50,11 @@ class Service(db.Model):
         secondary=service_mechanics,
         back_populates="services"
     )
+    
+    parts: Mapped[List["Inventory"]] = db.relationship(
+        secondary=service_inventory,
+        back_populates="service_tickets"
+    )
 
 
 class Mechanic(db.Model):
@@ -48,10 +63,23 @@ class Mechanic(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(db.String(250), nullable=False)
     email: Mapped[str] = mapped_column(db.String(360), nullable=False, unique=True)
+    password: Mapped[str] = mapped_column(db.String(255), nullable=False)
     phone: Mapped[str] = mapped_column(db.String(10), nullable=False)
     salary: Mapped[float] = mapped_column(nullable=False)
 
     services: Mapped[List['Service']] = db.relationship(
         secondary=service_mechanics,
         back_populates="mechanics"
+    )
+    
+class Inventory(db.Model):
+    __tablename__ = "inventory"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    price: Mapped[float] = mapped_column(nullable=False)
+    
+    service_tickets: Mapped[List["Service"]] = db.relationship(
+        secondary=service_inventory,
+        back_populates="parts"
     )

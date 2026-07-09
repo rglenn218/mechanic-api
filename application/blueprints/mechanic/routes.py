@@ -1,11 +1,12 @@
 from flask import request, jsonify
 from marshmallow import ValidationError
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from . import mechanic_bp
-from .schemas import mechanic_schema, mechanics_schema
+from .schemas import mechanic_schema, mechanics_schema, login_schema
 from application.extensions import db
-from application.models import Mechanic
+from application.models import Mechanic, Service, service_mechanics
+from application.utils import encode_mechanic_token, mechanic_token_required
 
 #CREATE new mechanic
 @mechanic_bp.route("/", methods=["POST"])
@@ -83,10 +84,60 @@ def delete_mechanic(id):
     if not mechanic:
         return jsonify({"error": "Mechanic not found"}), 404
     
+    mechanic.services.clear()
+    
     db.session.delete(mechanic)
     db.session.commit()
     
     return jsonify({"message": "Mechanic deleted successfully"}), 200
+
+@mechanic_bp.route("/login", methods=["POST"])
+def login_mechanic():
+    try:
+        login_data = login_schema.load(request.json)
+    except ValidationError as e:
+        return jsonify(e.messages), 400
+    
+    query = select(Mechanic).where(Mechanic.email == login_data["email"])
+    mechanic = db.session.execute(query).scalars().first()
+    
+    if not mechanic or mechanic.password != login_data["password"]:
+        return jsonify({"error": "Invalid email or password"}), 401
+    
+    token = encode_mechanic_token(mechanic.id)
+    
+    return jsonify({
+        "message": "Mechanic login successful",
+        "token": token
+    }), 200
+    
+@mechanic_bp.route("/most-tickets", methods=["GET"])
+def get_mechanics_by_ticket_count():
+    query = (
+        select(
+            Mechanic.id,
+            Mechanic.name,
+            Mechanic.email,
+            func.count(service_mechanics.c.service_id).label("ticket_count")
+        )
+        .join(service_mechanics, Mechanic.id == service_mechanics.c.mechanic_id)
+        .group_by(Mechanic.id, Mechanic.name, Mechanic.email)
+        .order_by(func.count(service_mechanics.c.service_id).desc())
+    )
+
+    results = db.session.execute(query).all()
+
+    mechanics = [
+        {
+            "id": id,
+            "name": name,
+            "email": email,
+            "ticket_count": ticket_count
+        }
+        for id, name, email, ticket_count in results
+    ]
+
+    return jsonify(mechanics), 200
 
 
         

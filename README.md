@@ -4,14 +4,98 @@ A RESTful API built with Flask, SQLAlchemy, Marshmallow and MySQL for managing c
 
 ---
 
+## Version 2 Update
+
+This project has been significantly expanded beyond the original CRUD API to demonstrate more advanced backend development concepts using Flask and SQLAlchemy.
+
+---
+
+### New Features
+
+- JWT authentication for Customers and Mechanics using `python-jose`
+- Protected API endpoints with Bearer Token authorization
+- Customer and Mechanic login endpoints
+- Customer-specific endpoint to retrieve only their own service tickets
+- Inventory resource with full CRUD operations
+- Many-to-many relationship between Inventory and Service Tickets
+- Route to add inventory parts to existing service tickets
+- Advanced service ticket editing to add and remove multiple mechanics in a single request
+- Mechanic leaderboard endpoint returning mechanics ordered by number of completed service tickets
+- Pagination for customer listings
+- Flask-Limiter rate limiting for authentication routes
+- Flask-Caching implementation for frequently requested endpoints
+- Environment variable support using `.env`
+- MySQL credentials removed from source control
+- Explanded Postman collection covering all endpoints, authentication, inventory management, pagination and advanced relationship routes
+
+---
+
+### Additional Technologies
+
+The following libraries were added during Version 2:
+
+- Flask-Limiter
+- Flask-Caching
+- python-jose
+- python-dotenv
+
+---
+
+## New API Endpoints
+
+### Authentication
+
+POST | `/customers/login` | Customer login
+POST | `/mechanics/login` | Mechanic login
+GET | `/customers/my-tickets/` | Returns authenticated customer's service tickets
+
+### Inventory
+
+POST | `/inventory/` | Create inventory part
+GET | `/inventory/` | Get all inventory parts
+GET | `/inventory/<id>` | Get inventory part by ID
+PUT | `/inventory/<id>` | Update inventory part
+DELETE | `/inventory/<id>` | Delete inventory part
+
+### Advanced Endpoints
+
+PUT | `/service-tickets/<ticket_id>/edit` | Edit service ticket mechanics
+PUT | `/service-tickets/<ticket_id>/add-part/<part_id>` | Add part to service ticket
+GET | `/mechanics/most-tickets` | Get mechanics by most tickets
+
+---
+
+## Authentication
+
+Protected routes require a Bearer Token obtained from the appropriate login endpoint.
+
+Example request header:
+
+```text
+Authorization: Bearer <JWT_TOKEN>
+```
+
+Customer tokens authorize customer-specific routes, while mechanic tokens authorize mechanic-specific routes.
+
+---
+
 ## Features
 
 - Customer CRUD operations
 - Mechanic CRUD operations
+- Inventory CRUD operations
+- JWT Authentication
+- Protected routes with Bearer Tokens
+- Customer-specific service ticket retrieval
 - Create and manage service tickets
 - Assign mechanics to service tickets
 - Remove mechanics from service tickets
-- Many-to-many relationship between mechanics and service tickets
+- Add inventory parts to service tickets
+- Edit mechanics assigned to service tickets
+- Mechanic ranking endpoint
+- Pagination
+- Rate limiting
+- Response caching
 - Marshmallow serialization and validation
 - Blueprint architecture using the Application Factory Pattern
 - MySQL database integration
@@ -29,6 +113,9 @@ A RESTful API built with Flask, SQLAlchemy, Marshmallow and MySQL for managing c
 - MySQL
 - MySQL Connector/Python
 - python-dotenv
+- Flask-Limiter
+- Flask-Caching
+- python-jose
 
 ---
 
@@ -40,11 +127,13 @@ mechanic-api/
 ├── application/
 │   ├── __init__.py
 │   ├── extensions.py
+│   ├── utils.py
 │   ├── models.py
 │   └── blueprints/
 │       ├── customer/
 │       ├── mechanic/
-│       └── service_ticket/
+│       ├── service_ticket/
+│       └── inventory/
 │
 ├── app.py
 ├── config.py
@@ -181,6 +270,8 @@ mechanic-api-postman-collection.json
 - Each Service Ticket belongs to one Customer
 - One Service Ticket can have many Mechanics
 - One Mechanic can work on many Service Tickets
+- One Service Ticket can use many Inventory Parts
+- One Inventory Part can be used on many Service Tickets
 
 ---
 
