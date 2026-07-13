@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 from urllib.parse import quote_plus
 
 try:
