@@ -44,6 +44,3 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URI")
     SECRET_KEY = os.getenv("SECRET_KEY")
-    
-    if not SQLALCHEMY_DATABASE_URI:
-        raise RuntimeError("DATABASE_URI was not loaded from the environment.")
