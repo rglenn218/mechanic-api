@@ -4,6 +4,79 @@ A RESTful API built with Flask, SQLAlchemy, Marshmallow and MySQL for managing c
 
 ---
 
+## Version 4 Update
+
+The final version of this project completes the transition from a locally developed REST API to a production-ready application with automated deployment.
+
+Version 4 focuses on continuous integration, continuous deployment (CI/CD), cloud hosting, and production configuration.
+
+---
+
+### New Features
+
+- Live deployment of the API using Render
+- Production PostgreSQL database hosted on Render
+- Separate Development, Testing and Production configurations
+- Gunicorn WSGI server for production deployment
+- GitHub Actions CI/CD pipeline
+- Automatic build verification on every push to the `main` branch
+- Automated execution of all 42 unit tests before deployment
+- Automatic deployment to Render using the Render API
+- Production environment variables managed securely through GitHub Secrets and Render Environment Variables
+- Swagger documentation updated for the live production API over HTTPS
+
+--- 
+
+### Continuous Integration & Continuous Deployment
+
+Every push to the `main` branch now triggers an automated GitHub Actions workflow that:
+
+1. Checks out the repository
+2. Sets up the Python environment
+3. Installs project dependencies
+4. Verifies the application builds successfully
+5. Executes all 42 automated unit tests
+6. Deploys the application to Render only after all tests pass
+
+This ensures only verified, tested code reaches the production environment.
+
+---
+
+### Production Deployment
+
+The application is now deployed using:
+
+- Render Web Service
+- Render PostgreSQL Database
+- Gunicorn
+- GitHub Actions
+- Render API
+
+Production credentials are managed securely through environment variables and are never committed to source control.
+
+---
+
+### Live API
+
+The deployed API includes:
+
+- Interactive Swagger documentation
+- Production PostgreSQL database
+- HTTPS endpoints
+- Automatic deployments from GitHub
+
+---
+
+### Additional Technologies
+
+The following technologies were added during Version 4:
+
+- Render
+- PostgreSQL
+- Gunicorn
+- GitHub Actions
+- psycopg2-binary
+
 ## Version 3 Update
 
 This project has been expanded into a production-style REST API with comprehensive API documentation and automated testing.
@@ -187,9 +260,13 @@ Customer tokens authorize customer-specific routes, while mechanic tokens author
 - SQLAlchemy
 - Flask Marshmallow
 - Marshmallow
-- MySQL
+- MySQL (Development & Testing)
+- PostgreSQL (Production)
 - MySQL Connector/Python
-- python-dotenv
+- psycopg2-binary
+- Gunicorn
+- GitHub Actions
+- Render
 - Flask-Limiter
 - Flask-Caching
 - python-jose
@@ -222,7 +299,7 @@ mechanic-api/
 │   ├── test_service_tickets.py
 │   └── test_inventory.py
 │
-├── app.py
+├── flask_app.py
 ├── config.py
 ├── requirements.txt
 ├── mechanic-api-postman-collection.json
