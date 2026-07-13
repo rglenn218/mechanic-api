@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_swagger_ui import get_swaggerui_blueprint
 
-from config import Config
+from config import DevelopmentConfig
 from .extensions import db, ma, limiter, cache
 from .models import Customer, Service, Mechanic, Inventory
 from .blueprints.customer import customer_bp
@@ -12,7 +12,7 @@ from .blueprints.inventory import inventory_bp
 SWAGGER_URL = "/api/docs"
 API_URL = "/static/swagger.json"
 
-def create_app(config_class=Config):
+def create_app(config_class=DevelopmentConfig):
     app = Flask(__name__)
     
     app.config.from_object(config_class)
