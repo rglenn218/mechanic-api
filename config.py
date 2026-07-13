@@ -1,8 +1,10 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
 class Config:
     password = quote_plus(os.getenv("MYSQL_PASSWORD"))
@@ -34,3 +36,10 @@ class TestingConfig(Config):
         f"{os.getenv('MYSQL_PORT')}/"
         f"mechanic_test_db"
     )
+    
+class ProductionConfig(Config):
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URI")
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    
+    if not SQLALCHEMY_DATABASE_URI:
+        raise RuntimeError("DATABASE_URI was not loaded from the environment.")
