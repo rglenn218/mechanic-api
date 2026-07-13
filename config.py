@@ -3,8 +3,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
 
-BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(BASE_DIR / ".env")
+try:
+    from dotenv import load_dotenv
+    
+    BASE_DIR = Path(__file__).resolve().parent
+    load_dotenv(BASE_DIR / ".env")
+except ImportError:
+    pass
 
 class Config:
     password = quote_plus(os.getenv("MYSQL_PASSWORD"))

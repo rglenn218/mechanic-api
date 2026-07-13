@@ -30,8 +30,13 @@ jobs:
 
       - name: Verify application imports
         env: 
-          DATABASE_URI: postgresql://test:test@localhost/test
-          SECRET_KEY: github-actions-test-secret
+          DATABASE_URI: ${{ secrets.DATABASE_URI }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          MYSQL_USER: root
+          MYSQL_PASSWORD: testpassword
+          MYSQL_HOST: 127.0.0.1
+          MYSQL_PORT: 3306
+          MYSQL_DATABASE: mechanic_db
         run: |
           python -m compileall application flask_app.py config.py
           python -c "from application import create_app; print('Application import successful')"
