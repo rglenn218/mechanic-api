@@ -50,45 +50,56 @@ def get_mechanic(id):
 
 #UPDATE mechanic
 @mechanic_bp.route("/<int:id>", methods=["PUT"])
-def update_mechanic(id):
+@mechanic_token_required
+def update_mechanic(logged_in_mechanic_id, id):
+    if logged_in_mechanic_id != id:
+        return jsonify({"error": "Unauthorized"}), 403
+
     query = select(Mechanic).where(Mechanic.id == id)
     mechanic = db.session.execute(query).scalars().first()
-    
+
     if not mechanic:
         return jsonify({"error": "Mechanic not found"}), 404
-    
+
     try:
         mechanic_data = mechanic_schema.load(request.json, partial=True)
     except ValidationError as e:
         return jsonify(e.messages), 400
-    
+
     if "email" in mechanic_data:
         query = select(Mechanic).where(Mechanic.email == mechanic_data["email"])
         existing_mechanic = db.session.execute(query).scalars().first()
-        
+
         if existing_mechanic and existing_mechanic.id != mechanic.id:
-            return jsonify({"error": "Email already associated with a mechanic"}), 400
-        
+            return jsonify(
+                {"error": "Email already associated with a mechanic."}
+            ), 400
+
     for key, value in mechanic_data.items():
         setattr(mechanic, key, value)
-        
+
     db.session.commit()
-    
+
     return mechanic_schema.jsonify(mechanic), 200
 
+#DELETE mechanic
 @mechanic_bp.route("/<int:id>", methods=["DELETE"])
-def delete_mechanic(id):
+@mechanic_token_required
+def delete_mechanic(logged_in_mechanic_id, id):
+    if logged_in_mechanic_id != id:
+        return jsonify({"error": "Unauthorized"}), 403
+
     query = select(Mechanic).where(Mechanic.id == id)
     mechanic = db.session.execute(query).scalars().first()
-    
+
     if not mechanic:
         return jsonify({"error": "Mechanic not found"}), 404
-    
+
     mechanic.services.clear()
-    
+
     db.session.delete(mechanic)
     db.session.commit()
-    
+
     return jsonify({"message": "Mechanic deleted successfully"}), 200
 
 @mechanic_bp.route("/login", methods=["POST"])

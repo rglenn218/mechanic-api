@@ -1,0 +1,1548 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Mechanic Shop API",
+        "description": "RESTful API for managing customers, mechanics, service tickets, and inventory.",
+        "version": "3.0.0"
+    },
+    "host": "127.0.0.1:5001",
+    "basePath": "/",
+    "schemes": [
+        "http"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Enter: Bearer followed by the JWT token"
+        }
+    },
+    "tags": [
+        {
+            "name": "Customers",
+            "description": "Customer CRUD and authentication"
+        },
+        {
+            "name": "Mechanics",
+            "description": "Mechanic CRUD, authentication and rankings"
+        },
+        {
+            "name": "Service Tickets",
+            "description": "Service ticket creation and relationship management"
+        },
+        {
+            "name": "Inventory",
+            "description": "Inventory part CRUD operations"
+        }
+    ],
+    "paths": {
+        "/customers/": {
+            "post": {
+                "tags": [
+                    "Customers"
+                ],
+                "summary": "Create a customer",
+                "description": "Creates a new customer after validating the request body and confirming that the email is not already in use.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Customer information",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Customer created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "id": 1,
+                                "name": "Rachel Glenn",
+                                "email": "rachel@example.com",
+                                "phone": "5551234567"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error or duplicate email",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Email already associated with an account."
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": ["Customers"],
+                "summary": "Get all customers",
+                "description": "Returns a paginated list of customers.",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "type": "integer",
+                        "default": 5,
+                        "description": "Number of customers per page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated customers retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/PaginatedCustomersResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/login": {
+            "post": {
+                "tags": ["Customers"],
+                "summary": "Customer login",
+                "description": "Validates customer credentials and returns a JWT Bearer Token.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Customer login credentials",
+                        "schema": {
+                            "$ref": "#/definitions/LoginPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login succressful",
+                        "schema": {
+                            "$ref": "#/definitions/LoginResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "message": "Login successful",
+                                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Invalid email or password"
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many login attempts"
+                    }
+                }
+            }
+        },
+        "/customers/my-tickets": {
+            "get": {
+                "tags": ["Customers"],
+                "summary": "Get authenticated customer's service tickets",
+                "description": "Returns all service tickets belonging to the authenticated customer.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Customer service tickets retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ServiceTicketResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/customers/{customer_id}": {
+            "parameters": [
+                {
+                    "name": "customer_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Customer ID"
+                }
+            ],
+            "get": {
+                "tags": ["Customers"],
+                "summary": "Get customer by ID",
+                "description": "Retrieves a single customer using the ID provided in the URL.",
+                "responses": {
+                    "200": {
+                        "description": "Customer retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Customer not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Customer not found"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": ["Customers"],
+                "summary": "Update customer",
+                "description": "Updates the authenticated customer's information. The token customer ID must match the URL customer ID.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Customer fields to update",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerUpdatePayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Customer updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/CustomerResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error or duplicate email",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated customer does not match requested customer",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Unauthorized"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Customer not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": ["Customers"],
+                "summary": "Delete customer",
+                "description": "Deletes the authenticated customer and their related service tickets.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Customer deleted successfully",
+                        "examples": {
+                            "application/json": {
+                                "message": "Customer deleted successfully"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid token",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated customer does not match requested customer",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Customer not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/mechanics/": {
+            "post": {
+                "tags": [
+                    "Mechanics"
+                ],
+                "summary": "Create a mechanic",
+                "description": "Creates a new mechanic after validating the request body and confirming that the email is not already associated with another mechanic.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Mechanic information",
+                        "schema": {
+                            "$ref": "#/definitions/MechanicPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Mechanic created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/MechanicResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "id": 1,
+                                "name": "Arthur Fonzarelli",
+                                "email": "thefonz@mechanics.com",
+                                "phone": "5559876543",
+                                "salary": "75000"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error or duplicate email",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Email already associated with a mechanic."
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Mechanics"
+                ],
+                "summary": "Get all mechanics",
+                "description": "Returns a list of all mechanics stored in the database.",
+                "responses": {
+                    "200": {
+                        "description": "Mechanics retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/MechanicResponse"
+                            }
+                        },
+                        "examples": {
+                            "application/json" : [
+                                {
+                                    "id": 1,
+                                    "name": "Arthur Fonzarelli",
+                                    "email": "thefonz@mechanics.com",
+                                    "phone": "5559876543",
+                                    "salary": "75000"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/mechanics/login": {
+            "post": {
+                "tags": [
+                    "Mechanics"
+                ],
+                "summary": "Mechanic login",
+                "description": "Validates mechanic credentials and returns a mechanic-specific JWT Bearer Token.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Mechanic login credentials",
+                        "schema": {
+                            "$ref": "#/definitions/LoginPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mechanic login successful",
+                        "schema": {
+                            "$ref": "#/definitions/MechanicLoginResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "message": "Mechanic login successful",
+                                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Invalid email or password"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mechanics/most-tickets": {
+            "get": {
+                "tags": [
+                    "Mechanics"
+                ],
+                "summary": "Get mechanics ranked by ticket count",
+                "description": "Returns mechanics ordered from the highest to lowest number of assigned service tickets.",
+                "responses": {
+                    "200": {
+                        "description": "Mechanic rankings retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/MechanicTicketCountResponse"
+                            }
+                        },
+                        "examples": {
+                            "application/json": [
+                                {
+                                    "id": 1,
+                                    "name":"Arthur Fonzarelli",
+                                    "email": "thefonz@mechanics.com",
+                                    "ticket_count": 4
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/mechanics/{mechanic_id}": {
+            "parameters": [
+                {
+                    "name": "mechanic_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Mechanic ID"
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Mechanics"
+                ],
+                "summary": "Get mechanic by ID",
+                "description": "Retrieves a single mechanic using the ID provided in the URL.",
+                "responses": {
+                    "200": {
+                        "description": "Mechanic retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/MechanicResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Mechanic not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Mechanic not found"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Mechanics"
+                ],
+                "summary": "Update mechanic",
+                "description": "Updates the authenticated mechanic's information. The mechanic ID stored in the token must match the mechanic ID in the URL.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Mechanic fields to update",
+                        "schema": {
+                            "$ref": "#/definitions/MechanicUpdatePayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mechanic updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/MechanicResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error or duplicate email",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid mechanic token",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Token is missing"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Authenticated mechanic does not match the requested mechanic",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Unauthorized"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Mechanic not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Mechanics"
+                ],
+                "summary": "Delete mechanic",
+                "description": "Deletes the authenticated mechanic and removes their service-ticket relationships without deleting the service tickets.",
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mechanic deleted successfully",
+                        "examples": {
+                            "application/json": {
+                                "message": "Mechanic deleted successfully"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid mechanic token",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Mechanic not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/service-tickets/": {
+            "post": {
+                "tags": [
+                    "Service Tickets"
+                ],
+                "summary": "Create a service ticket",
+                "description": "Creates a new service ticket for an existing customer.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Service ticket information",
+                        "schema": {
+                            "$ref": "#/definitions/ServiceTicketPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Service ticket created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/ServiceTicketResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "id": 1,
+                                "VIN": "123456789ABCDEFG",
+                                "service_date": "2026-07-06",
+                                "service_desc": "Oil change and brake inspection",
+                                "customer_id": 1
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request data",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Customer not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Customer not found"
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Service Tickets"
+                ],
+                "summary": "Get all service tickets",
+                "description": "Returns all service tickets stored in the database.",
+                "responses": {
+                    "200": {
+                        "description": "Service tickets retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ServiceTicketResponse"
+                            }
+                        },
+                        "examples": {
+                            "application/json": [
+                                {
+                                    "id": 1,
+                                    "VIN": "123456789ABCDEFG",
+                                    "service_date": "2026-07-06",
+                                    "service_desc": "Oil change and brake inspection",
+                                    "customer_id": 1
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/service-tickets/{ticket-id}": {
+            "parameters": [
+                {
+                    "name": "ticket_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Service ticket ID"
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Service Tickets"
+                ],
+                "summary": "Get service ticket by ID",
+                "description": "Retrieves a single service ticket using the ID provided in the URL.",
+                "responses": {
+                    "200": {
+                        "description": "Service ticket retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/ServiceTicketResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Service ticket not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Service ticket not found"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/service-tickets/{ticket_id}/assign-mechanic/{mechanic_id}": {
+            "parameters": [
+                {
+                    "name": "ticket_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Service ticket ID"
+                },
+                {
+                    "name": "mechanic_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Mechanic ID"
+                }
+            ],
+            "put": {
+                "tags": [
+                    "Service Tickets"
+                ],
+                "summary": "Assign mechanic to service ticket",
+                "description": "Adds a mechanic to the service ticket's mechanics relationship.",
+                "responses": {
+                    "200": {
+                        "description": "Mechanic assigned successfully",
+                        "schema": {
+                            "$ref": "#/definitions/MessageResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "message": "Mechanic assigned successfully"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Service ticket or mechanic not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Mechanic not found"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/service-tickets/{ticket_id}/remove-mechanic/{mechanic_id}": {
+            "parameters": [
+                {
+                    "name": "ticket_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Service ticket ID"
+                },
+                {
+                    "name": "mechanic_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Mechanic ID"
+                }
+            ],
+            "put": {
+                "tags": [
+                    "Service Tickets"
+                ],
+                "summary": "Remove mechanic from service ticket",
+                "description": "Removes an existing mechanic relationship from a service ticket without deleting either record.",
+                "responses": {
+                    "200": {
+                        "description": "Mechanic removed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/MessageResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "message": "Mechanic removed successfully"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Service ticket or mechanic not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Service ticket not found"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/service-tickets/{ticket_id}/edit": {
+            "put": {
+                "tags": [
+                    "Service Tickets"
+                ],
+                "summary": "Edit service ticket mechanics",
+                "description": "Adds and removes multiple mechanics from a service ticket in a single request.",
+                "parameters": [
+                    {
+                        "name": "ticket_id",
+                        "in": "path",
+                        "required": true,
+                        "type": "integer",
+                        "description": "Service ticket ID"
+                    },
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Mechanic IDs to add to or remove from the service ticket",
+                        "schema": {
+                            "$ref": "#/definitions/EditServiceTicketMechanicsPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Service ticket mechanics updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/MessageResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "message": "Service ticket mechanics updated successfully"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Service ticket not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Service ticket not found"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/service-tickets/{ticket_id}/add-part/{part_id}": {
+            "parameters": [
+                {
+                    "name": "ticket_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Service ticket ID"
+                },
+                {
+                    "name": "part_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Inventory part ID"
+                }
+            ],
+            "put": {
+                "tags": [
+                    "Service Tickets"
+                ],
+                "summary": "Add inventory part to service ticket",
+                "description": "Associates an inventory part with an existing service ticket.",
+                "responses": {
+                    "200": {
+                        "description": "Part added successfully",
+                        "schema": {
+                            "$ref": "#/definitions/MessageResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "message": "Part added to service ticket successfully"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Service ticket or inventory item not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Inventory item not found"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/": {
+            "post": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Create an inventory item",
+                "description": "Creates a new inventory part with a name and price.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Inventory item information",
+                        "schema": {
+                            "$ref": "#/definitions/InventoryPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Inventory item created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/InventoryResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "id": 1,
+                                "name": "Brake Pads",
+                                "price": 89.99
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "price": [
+                                    "Missing data for required field."
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Get all inventory items",
+                "description": "Returns every inventory part stored in the database.",
+                "responses": {
+                    "200": {
+                        "description": "Inventory item retrieved successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/InventoryResponse"
+                            }
+                        },
+                        "examples": {
+                            "application/json": [
+                                {
+                                    "id": 1,
+                                    "name": "Brake Pads",
+                                    "price": 89.99
+                                },
+                                {
+                                    "id": 2,
+                                    "name": "Oil Filter",
+                                    "price": 19.99
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/inventory/{inventory_id}": {
+            "parameters": [
+                {
+                    "name": "inventory_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "integer",
+                    "description": "Inventory item ID"
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Get inventory item by ID",
+                "description": "Retrieves a single inventory item using the ID provided in the URL.",
+                "responses": {
+                    "200": {
+                        "description": "Inventory item retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/InventoryResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "id": 1,
+                                "name": "Brake Pads",
+                                "price": 89.99
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Inventory item not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Inventory item not found"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Update inventory item",
+                "description": "Updates one or more fields on an existing inventory item.",
+                "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "required": true,
+                        "description": "Inventory fields to update",
+                        "schema": {
+                            "$ref": "#/definitions/InventoryUpdatePayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Inventory item updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/InventoryResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "id": 1,
+                                "name": "Brake Pads",
+                                "price": 99.99
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Inventory item not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Inventory item not found"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Delete inventory item",
+                "description": "Deletes an inventory item and removes its service-ticket relationships without deleting any service tickets.",
+                "responses": {
+                    "200": {
+                        "description": "Inventory item deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/MessageResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "message": "Inventory item deleted successfully"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Inventory item not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        },
+                        "examples": {
+                            "application/json": {
+                                "error": "Inventory item not found"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "CustomerPayload": {
+            "type": "object",
+            "required": [
+                "name",
+                "email",
+                "phone",
+                "password"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Rachel Glenn"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "rachel@example.com"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5551234567"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "password123"
+                }
+            }
+        },
+        "CustomerResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Rachel Glenn"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "rachel@example.com"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5551234567"
+                }
+            }
+        },
+        "LoginPayload": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "rachel@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "password123"
+                }
+            }
+        },
+        "LoginResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Login successful"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Customer not found"
+                }
+            }
+        },
+        "CustomerUpdatePayload": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Rachel Glenn"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "updated@example.com"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5551112222"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "newpassword123"
+                }
+            }
+        },
+        "PaginatedCustomersResponse": {
+            "type": "object",
+            "properties": {
+                "customers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CustomerResponse"
+                    }
+                },
+                "page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "per_page": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 12
+                },
+                "pages": {
+                    "type": "integer",
+                    "example": 3
+                }
+            }
+        },
+        "ServiceTicketResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "VIN": {
+                    "type": "string",
+                    "example": "123456789ABCDEFG"
+                },
+                "service_date": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2026-07-06"
+                },
+                "service_desc": {
+                    "type": "string",
+                    "example": "Oil change and brake inspection"
+                },
+                "customer_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "MechanicPayload": {
+            "type": "object",
+            "required": [
+                "name",
+                "email",
+                "password",
+                "phone",
+                "salary"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Arthur Fonzarelli"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "thefonz@mechanics.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "password123"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5559876543"
+                },
+                "salary": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 75000
+                }
+            }
+        },
+        "MechanicUpdatePayload": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Arthur Fonzarelli"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "updated@mechanics.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "newpassword123"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5551112222"
+                },
+                "salary": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 82000
+                }
+            }
+        },
+        "MechanicResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Arthur Fonzarelli"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "thefonz@mechanics.com"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5559876543"
+                },
+                "salary": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 75000
+                }
+            }
+        },
+        "MechanicLoginResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Mechanic login successful"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "MechanicTicketCountResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Arthur Fonzarelli"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "thefonz@mechanics.com"
+                },
+                "ticket_count": {
+                    "type": "integer",
+                    "example": 4
+                }
+            }
+        },
+        "ServiceTicketPayload": {
+            "type": "object",
+            "required": [
+                "VIN",
+                "service_date",
+                "service_desc",
+                "customer_id"
+            ],
+            "properties": {
+                "VIN": {
+                    "type": "string",
+                    "maxLength": 17,
+                    "example": "123456789ABCDEFG"
+                },
+                "service_date": {
+                    "type": "string",
+                    "format": "date",
+                    "example": "2026-07-06"
+                },
+                "service_desc": {
+                    "type": "string",
+                    "example": "Oil change and brake inspection"
+                },
+                "customer_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "EditServiceTicketMechanicsPayload": {
+            "type": "object",
+            "properties": {
+                "add_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        1,
+                        2
+                    ]
+                },
+                "remove_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        3
+                    ]
+                }
+            }
+        },
+        "MessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Operation completed successfully"
+                }
+            }
+        },
+        "InventoryPayload": {
+            "type": "object",
+            "required": [
+                "name",
+                "price"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Brake Pads"
+                },
+                "price": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 89.99
+                }
+            }
+        },
+        "InventoryUpdatePayload": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Premium Brake Pads"
+                },
+                "price": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 99.99
+                }
+            }
+        },
+        "InventoryResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Brake Pads"
+                },
+                "price": {
+                    "type": "number",
+                    "format": "float",
+                    "example": 89.99
+                }
+            }
+        }
+    }
+}

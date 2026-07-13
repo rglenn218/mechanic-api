@@ -22,3 +22,15 @@ class Config:
     
     CACHE_TYPE = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT = 60
+    
+class TestingConfig(Config):
+    TESTING = True
+    
+    SQLALCHEMY_DATABASE_URI = (
+        f"mysql+mysqlconnector://"
+        f"{os.getenv('MYSQL_USER')}:"
+        f"{Config.password}@"
+        f"{os.getenv('MYSQL_HOST')}:"
+        f"{os.getenv('MYSQL_PORT')}/"
+        f"mechanic_test_db"
+    )

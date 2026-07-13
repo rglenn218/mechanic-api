@@ -119,8 +119,8 @@ def edit_service_ticket_mechanics(ticket_id):
             ticket.mechanics.append(mechanic)
         
     for mechanic_id in remove_ids:
-        quert = select(Mechanic).where(Mechanic.id == mechanic_id)
-        mechanic = db.session.execute(query).scalars().first
+        query = select(Mechanic).where(Mechanic.id == mechanic_id)
+        mechanic = db.session.execute(query).scalars().first()
         
         if mechanic and mechanic in ticket.mechanics:
             ticket.mechanics.remove(mechanic)

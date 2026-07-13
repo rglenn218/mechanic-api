@@ -4,6 +4,80 @@ A RESTful API built with Flask, SQLAlchemy, Marshmallow and MySQL for managing c
 
 ---
 
+## Version 3 Update
+
+This project has been expanded into a production-style REST API with comprehensive API documentation and automated testing.
+
+Version 3 focuses on production readiness by adding comprehensive API documentation and automated testing to improve maintainability, reliability, and developer experience.
+
+---
+
+### New Features
+
+- Interactive API documentation using Flask-Swagger and Flask-Swagger-UI
+- Complete Swagger documentation for every endpoint
+- Request payload definitions and reusable response schemas
+- Bearer Token authentication documented within Swagger
+- Comprehensive automated testing suite using Python's built-in `unittest`
+- Individual test modules for Customers, Mechanics, Service Tickets, and Inventory
+- Positive and negative test coverage for every API resource
+- Dedicated testing configuration using a separate MySQL test database
+- Improved project structure supporting production and testing environments
+
+---
+
+### Testing
+
+The project now includes **42 automated unit tests** covering:
+
+- Customer endpoints
+- Mechanic endpoints
+- Service Ticket endpoints
+- Inventory endpoints
+- Authentication
+- Authorization
+- CRUD operations
+- Relationship management
+- Error handling
+- Protected routes
+
+Run the complete test suite with:
+
+```bash
+python -m unittest discover tests
+```
+
+---
+
+### API Documentation
+
+Interactive Swagger documentation is available after starting the server:
+
+```
+http://127.0.0.1:5001/api/docs
+```
+
+The documentation includes:
+
+- Every API endpoint
+- Request payload examples
+- Response examples
+- Authentication requirements
+- Reusable schema definitions
+- Interactive endpoint explorer
+
+---
+
+### Additional Technologies
+
+The following libraries were added during Version 3:
+
+- Flask-Swagger
+- Flask-Swagger-UI
+- unittest
+
+---
+
 ## Version 2 Update
 
 This project has been significantly expanded beyond the original CRUD API to demonstrate more advanced backend development concepts using Flask and SQLAlchemy.
@@ -99,6 +173,9 @@ Customer tokens authorize customer-specific routes, while mechanic tokens author
 - Marshmallow serialization and validation
 - Blueprint architecture using the Application Factory Pattern
 - MySQL database integration
+- Interactive Swagger API documentation
+- Automated unit testing (42 tests)
+- Separate testing configuration and database
 
 ---
 
@@ -116,6 +193,9 @@ Customer tokens authorize customer-specific routes, while mechanic tokens author
 - Flask-Limiter
 - Flask-Caching
 - python-jose
+- Flask-Swagger
+- Flask-Swagger-UI
+- unittest
 
 ---
 
@@ -125,20 +205,27 @@ Customer tokens authorize customer-specific routes, while mechanic tokens author
 mechanic-api/
 │
 ├── application/
-│   ├── __init__.py
+│   ├── blueprints/
+│   │   ├── customer/
+│   │   ├── mechanic/
+│   │   ├── service_ticket/
+│   │   └── inventory/
+│   ├── static/
+│   │   └── swagger.json
 │   ├── extensions.py
-│   ├── utils.py
 │   ├── models.py
-│   └── blueprints/
-│       ├── customer/
-│       ├── mechanic/
-│       ├── service_ticket/
-│       └── inventory/
+│   └── utils.py
+│
+├── tests/
+│   ├── test_customers.py
+│   ├── test_mechanics.py
+│   ├── test_service_tickets.py
+│   └── test_inventory.py
 │
 ├── app.py
 ├── config.py
-├── .env.example
-├── Mechanic_Shop_API.postman_collection.json
+├── requirements.txt
+├── mechanic-api-postman-collection.json
 └── README.md
 ```
 
