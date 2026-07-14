@@ -713,7 +713,7 @@
         "/service-tickets/{ticket-id}": {
             "parameters": [
                 {
-                    "name": "ticket_id",
+                    "name": "ticket-id",
                     "in": "path",
                     "required": true,
                     "type": "integer",
